@@ -7,9 +7,8 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use unapi\def\common\dto\OperatorDto;
 use unapi\def\common\interfaces\DefServiceInterface;
-use unapi\dto\PhoneDto;
+use unapi\dto\PhoneInterface;
 use unapi\interfaces\ServiceInterface;
 
 use function GuzzleHttp\json_decode;
@@ -49,10 +48,10 @@ class Tele2Service implements DefServiceInterface, ServiceInterface, LoggerAware
     }
 
     /**
-     * @param PhoneDto $phone
+     * @param PhoneInterface $phone
      * @return PromiseInterface
      */
-    public function detectOperator(PhoneDto $phone): PromiseInterface
+    public function detectOperator(PhoneInterface $phone): PromiseInterface
     {
         return $this->initialPage($this->client)->then(function () use ($phone) {
             return $this->submitForm($this->client, $phone)->then(function (ResponseInterface $response) {
@@ -72,10 +71,10 @@ class Tele2Service implements DefServiceInterface, ServiceInterface, LoggerAware
 
     /**
      * @param Tele2Client $client
-     * @param PhoneDto $phone
+     * @param PhoneInterface $phone
      * @return PromiseInterface
      */
-    protected function submitForm(Tele2Client $client, PhoneDto $phone): PromiseInterface
+    protected function submitForm(Tele2Client $client, PhoneInterface $phone): PromiseInterface
     {
         return $client->postAsync(sprintf('/gateway.php?%s', $phone->getNumber()), [
             'form_params' => [
@@ -87,10 +86,10 @@ class Tele2Service implements DefServiceInterface, ServiceInterface, LoggerAware
 
     /**
      * @param string $body
-     * @return OperatorDto
+     * @return array
      * @throws \ErrorException
      */
-    protected function processResult(string $body): OperatorDto
+    protected function processResult(string $body): array
     {
         $this->logger->info($body);
         $result = json_decode($body);
@@ -98,8 +97,9 @@ class Tele2Service implements DefServiceInterface, ServiceInterface, LoggerAware
         if (empty($result->response))
             throw new \ErrorException('Service error');
 
-        return (new OperatorDto())
-                ->setName($result->response->mnc->value)
-                ->setMnc('250' . $result->response->mnc->code);
+        return [
+            'name' => $result->response->mnc->value,
+            'mnc' => '250' . $result->response->mnc->code,
+        ];
     }
 }

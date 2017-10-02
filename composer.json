@@ -8,8 +8,8 @@
     "php": ">=7.1.0",
     "guzzlehttp/guzzle": "^6.3",
     "psr/log": "^1.0",
-    "unapi/unapi": "^1.0.2",
-    "unapi/def-common": "^1.0.0"
+    "unapi/unapi": "^1.0.5",
+    "unapi/def-common": "^1.0.1"
   },
   "autoload" : {
     "psr-4": {
