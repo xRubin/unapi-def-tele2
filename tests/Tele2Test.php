@@ -1,7 +1,8 @@
 <?php
 
 use unapi\def\tele2\Tele2Service;
-use unapi\dto\PhoneDto;
+use unapi\def\common\dto\PhoneDto;
+use unapi\def\common\dto\OperatorDto;
 
 class Tele2Test extends \PHPUnit_Framework_TestCase
 {
@@ -11,7 +12,7 @@ class Tele2Test extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(
             $service->detectOperator(new PhoneDto('9152324203'))->wait(),
-            ['name' => 'Tele2', 'mnc' => 25020]
+            OperatorDto::toDto(['name' => 'Tele2', 'mnc' => 25020])
         );
     }
 }

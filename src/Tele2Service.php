@@ -2,13 +2,16 @@
 
 namespace unapi\def\tele2;
 
+use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Promise\RejectedPromise;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use unapi\def\common\dto\OperatorDto;
+use unapi\def\common\dto\PhoneInterface;
 use unapi\def\common\interfaces\DefServiceInterface;
-use unapi\dto\PhoneInterface;
 use unapi\interfaces\ServiceInterface;
 
 use function GuzzleHttp\json_decode;
@@ -19,6 +22,8 @@ class Tele2Service implements DefServiceInterface, ServiceInterface, LoggerAware
     private $client;
     /** @var LoggerInterface */
     private $logger;
+    /** @var string */
+    private $responseClass = OperatorDto::class;
 
     public function __construct(array $config = [])
     {
@@ -37,6 +42,9 @@ class Tele2Service implements DefServiceInterface, ServiceInterface, LoggerAware
         } else {
             throw new \InvalidArgumentException('Logger must be instance of LoggerInterface');
         }
+
+        if (isset($config['responseClass']))
+            $this->responseClass = $config['responseClass'];
     }
 
     /**
@@ -55,7 +63,7 @@ class Tele2Service implements DefServiceInterface, ServiceInterface, LoggerAware
     {
         return $this->initialPage($this->client)->then(function () use ($phone) {
             return $this->submitForm($this->client, $phone)->then(function (ResponseInterface $response) {
-                return $this->processResult($response->getBody()->getContents());
+                return $this->processResult($response);
             });
         });
     }
@@ -85,21 +93,21 @@ class Tele2Service implements DefServiceInterface, ServiceInterface, LoggerAware
     }
 
     /**
-     * @param string $body
-     * @return array
-     * @throws \ErrorException
+     * @param ResponseInterface $response
+     * @return PromiseInterface
      */
-    protected function processResult(string $body): array
+    protected function processResult(ResponseInterface $response): PromiseInterface
     {
+        $body = $response->getBody()->getContents();
         $this->logger->info($body);
         $result = json_decode($body);
 
         if (empty($result->response))
-            throw new \ErrorException('Service error');
+            return new RejectedPromise('Service error');
 
-        return [
+        return new FulfilledPromise($this->responseClass::toDto([
             'name' => $result->response->mnc->value,
             'mnc' => '250' . $result->response->mnc->code,
-        ];
+        ]));
     }
 }
