@@ -12,11 +12,10 @@ use Psr\Log\NullLogger;
 use unapi\def\common\dto\OperatorDto;
 use unapi\def\common\dto\PhoneInterface;
 use unapi\def\common\interfaces\DefServiceInterface;
-use unapi\interfaces\ServiceInterface;
 
 use function GuzzleHttp\json_decode;
 
-class Tele2Service implements DefServiceInterface, ServiceInterface, LoggerAwareInterface
+class Tele2Service implements DefServiceInterface, LoggerAwareInterface
 {
     /** @var Tele2Client */
     private $client;
